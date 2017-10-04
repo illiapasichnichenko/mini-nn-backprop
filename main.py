@@ -28,9 +28,10 @@ def lossFun(inputs, targets):
 	x, z1, h, z2, y = {}, {}, {}, {}, {}
 	loss = 0
 	acc = 0
+	n = len(inputs)
 	# forward pass
 	# x --W1,b1--> z1 --sigmoid--> h --W2,b2--> z2 --softmax--> y
-	for t in range(len(inputs)):
+	for t in range(n):
 		x[t] = inputs[t]
 		z1[t] = np.dot(W1, x[t]) + b1
 		h[t] = sigmoid(z1[t]) # hidden state
@@ -38,12 +39,11 @@ def lossFun(inputs, targets):
 		y[t] = softmax(z2[t]) # probabilities of 2 cases
 		loss += -np.log(y[t][targets[t],0]) # cross-entropy loss
 		acc += 1 if np.argmax(y[t])==targets[t] else 0
-	acc /= len(inputs) # accuracy of classification
+	loss, acc = loss/n, acc/n # accuracy of classification
 	# backward pass: compute gradients going backwards
 	# x <--W1,b1-- z1 <--sigmoid-- h <--W2,b2-- z2 <--softmax-- y
 	dW1, dW2 = np.zeros_like(W1), np.zeros_like(W2)
 	db1, db2 = np.zeros_like(b1), np.zeros_like(b2)
-	# dhnext = np.zeros_like(hs[0])
 	for t in reversed(range(len(inputs))):
 		dz2 = np.copy(y[t])
 		dz2[targets[t]] -= 1 # backprop into z2 through loss and softmax
@@ -71,7 +71,7 @@ for i in range(iter_number):
 	
 	# forward the batch through the net and fetch gradient
 	loss, acc, dW1, dW2, db1, db2 = lossFun(inputs, targets)
-	if i % 50 == 0: print('iter {}, loss: {}, accuracy: {}'.format(i, loss, acc)) # print progress
+	if i % 50 == 0: print('iter {}, loss: {:.4f}, accuracy: {:.2f}'.format(i, loss, acc)) # print progress
 	
 	# perform parameter update with Adagrad
 	for param, dparam, mem in zip([W1, W2, b1, b2], 
