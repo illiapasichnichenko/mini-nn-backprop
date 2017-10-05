@@ -25,13 +25,15 @@ def lossFun(inputs, targets):
 	targets is a list of numbers 0 or 1
 	returns the loss and gradients on model parameters
 	"""
+	n = len(inputs)
 	x, z1, h, z2, y = {}, {}, {}, {}, {}
 	loss = 0
 	acc = 0
-	n = len(inputs)
-	# forward pass
-	# x --W1,b1--> z1 --sigmoid--> h --W2,b2--> z2 --softmax--> y
+	dW1, dW2 = np.zeros_like(W1), np.zeros_like(W2)
+	db1, db2 = np.zeros_like(b1), np.zeros_like(b2)
 	for t in range(n):
+		# forward pass
+		# x --W1,b1--> z1 --sigmoid--> h --W2,b2--> z2 --softmax--> y
 		x[t] = inputs[t]
 		z1[t] = np.dot(W1, x[t]) + b1
 		h[t] = sigmoid(z1[t]) # hidden state
@@ -39,12 +41,8 @@ def lossFun(inputs, targets):
 		y[t] = softmax(z2[t]) # probabilities of 2 cases
 		loss += -np.log(y[t][targets[t],0]) # cross-entropy loss
 		acc += 1 if np.argmax(y[t])==targets[t] else 0
-	loss, acc = loss/n, acc/n # accuracy of classification
-	# backward pass: compute gradients going backwards
-	# x <--W1,b1-- z1 <--sigmoid-- h <--W2,b2-- z2 <--softmax-- y
-	dW1, dW2 = np.zeros_like(W1), np.zeros_like(W2)
-	db1, db2 = np.zeros_like(b1), np.zeros_like(b2)
-	for t in reversed(range(len(inputs))):
+		# backward pass: compute gradients going backwards
+		# x <--W1,b1-- z1 <--sigmoid-- h <--W2,b2-- z2 <--softmax-- y
 		dz2 = np.copy(y[t])
 		dz2[targets[t]] -= 1 # backprop into z2 through loss and softmax
 		dW2 += np.dot(dz2, h[t].T)
@@ -53,6 +51,7 @@ def lossFun(inputs, targets):
 		dz1 = h[t]*(1-h[t])*dh # backprop into z2 through sigmoid
 		dW1 += np.dot(dz1, x[t].T)
 		db1 += dz1
+	loss, acc = loss/n, acc/n # accuracy of classification
 	for dparam in [dW1, dW2, db1, db2]:
 		np.clip(dparam, -5, 5, out=dparam) # clip to mitigate exploding gradients
 	return loss, acc, dW1, dW2, db1, db2
